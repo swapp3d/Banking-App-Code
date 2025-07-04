@@ -1,8 +1,8 @@
 package banking;
 
 public class BankAccount {
-    private final String username;
-    private final String password;
+    private String username;
+    private String password;
     private double balance;
 
     public BankAccount(String username, String password) {
@@ -11,36 +11,46 @@ public class BankAccount {
         this.balance = 0.0;
     }
 
-    public boolean authenticate(String inputPassword) {
-        return this.password.equals(inputPassword);
+    public BankAccount(String username, String password, double balance) {
+        this.username = username;
+        this.password = password;
+        this.balance = balance;
     }
 
     public void deposit(double amount) {
         if (amount > 0) balance += amount;
     }
 
-    public boolean withdraw(double amount) {
-        if (amount > 0 && balance >= amount) {
-            balance -= amount;
-            return true;
-        }
-        return false;
+    public void withdraw(double amount) {
+        if (amount > 0 && amount <= balance) balance -= amount;
     }
 
-    public void transferTo(BankAccount other, double amount) {
-        if (withdraw(amount)) other.deposit(amount);
+    public void transfer(BankAccount receiver, double amount) {
+        if (receiver != null && amount > 0 && amount <= balance) {
+            withdraw(amount);
+            receiver.deposit(amount);
+        }
+    }
+
+    public void printBalance() {
+        System.out.printf("Balance for %s: $%.2f%n", username, balance);
+    }
+
+    public boolean checkPassword(String pass) {
+        return password.equals(pass);
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public double getBalance() {
         return balance;
     }
 
-    public String getUsername() {
-        return username;
+    public String toCSV() {
+        return username + "," + password + "," + balance;
     }
-    public String getPassword() {
-        return password;
-    }
-
 }
+
 

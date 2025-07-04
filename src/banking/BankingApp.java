@@ -6,100 +6,102 @@ public class BankingApp {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         BankManager bankManager = new BankManager();
-        bankManager.loadFromCSV("account_report.csv");
+        bankManager.loadFromCSV();
+
         BankAccount currentAccount = null;
 
         while (true) {
-            System.out.println("\n--- Banking System ---");
-            if (currentAccount == null) {
-                System.out.println("1. Create Account");
-                System.out.println("2. Login");
-                System.out.println("0. Exit");
-                System.out.print("Choose: ");
-                int choice = scanner.nextInt();
-                scanner.nextLine();
+            System.out.println("\n==== Banking Menu ====");
+            System.out.println("1. Create Account");
+            System.out.println("2. Login");
+            System.out.println("3. Deposit");
+            System.out.println("4. Withdraw");
+            System.out.println("5. Transfer");
+            System.out.println("6. Show Balance");
+            System.out.println("7. Exit");
 
-                switch (choice) {
-                    case 1 -> {
-                        System.out.print("Username: ");
-                        String user = scanner.nextLine();
-                        System.out.print("Password: ");
-                        String pass = scanner.nextLine();
-                        if (bankManager.createAccount(user, pass)) {
-                            System.out.println("Account created!");
-                        } else {
-                            System.out.println("Account already exists.");
-                        }
-                    }
-                    case 2 -> {
-                        System.out.print("Username: ");
-                        String user = scanner.nextLine();
-                        System.out.print("Password: ");
-                        String pass = scanner.nextLine();
-                        BankAccount acc = bankManager.login(user, pass);
-                        if (acc != null) {
-                            currentAccount = acc;
-                            System.out.println("Login successful!");
-                        } else {
-                            System.out.println("Login failed.");
-                        }
-                    }
-                    case 0 -> {
-                        System.out.println("Goodbye!");
-                        return;
-                    }
-                }
-            } else {
-                System.out.println("Logged in as: " + currentAccount.getUsername());
-                System.out.println("1. Deposit");
-                System.out.println("2. Withdraw");
-                System.out.println("3. Transfer");
-                System.out.println("4. Check Balance");
-                System.out.println("5. Export All Accounts to CSV");
-                System.out.println("6. Logout");
-                System.out.print("Choose: ");
-                int option = scanner.nextInt();
-                scanner.nextLine();
+            System.out.print("Choose option: ");
+            int choice = Integer.parseInt(scanner.nextLine());
 
-                switch (option) {
-                    case 1 -> {
-                        System.out.print("Amount: ");
-                        double amount = scanner.nextDouble();
-                        currentAccount.deposit(amount);
-                        System.out.println("Deposited.");
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter username: ");
+                    String user = scanner.nextLine();
+                    System.out.print("Enter password: ");
+                    String pass = scanner.nextLine();
+                    bankManager.createAccount(user, pass);
+                    System.out.println(" Account created.");
+                    break;
+
+                case 2:
+                    System.out.print("Enter username: ");
+                    String loginUser = scanner.nextLine();
+                    System.out.print("Enter password: ");
+                    String loginPass = scanner.nextLine();
+                    currentAccount = bankManager.login(loginUser, loginPass);
+                    if (currentAccount != null) {
+                        System.out.println(" Login successful.");
+                    } else {
+                        System.out.println(" Login failed.");
                     }
-                    case 2 -> {
-                        System.out.print("Amount: ");
-                        double amount = scanner.nextDouble();
-                        if (currentAccount.withdraw(amount)) {
-                            System.out.println("Withdrawn.");
-                        } else {
-                            System.out.println("Insufficient funds.");
-                        }
+                    break;
+
+                case 3:
+                    if (currentAccount != null) {
+                        System.out.print("Amount to deposit: ");
+                        double dep = Double.parseDouble(scanner.nextLine());
+                        currentAccount.deposit(dep);
+                        bankManager.saveToCSV();
+                        System.out.println(" Deposit successful.");
+                    } else {
+                        System.out.println(" Please login first.");
                     }
-                    case 3 -> {
-                        System.out.print("Recipient username: ");
+                    break;
+
+                case 4:
+                    if (currentAccount != null) {
+                        System.out.print("Amount to withdraw: ");
+                        double wit = Double.parseDouble(scanner.nextLine());
+                        currentAccount.withdraw(wit);
+                        bankManager.saveToCSV();
+                        System.out.println(" Withdrawal successful.");
+                    } else {
+                        System.out.println(" Please login first.");
+                    }
+                    break;
+
+                case 5:
+                    if (currentAccount != null) {
+                        System.out.print("Send to username: ");
                         String toUser = scanner.nextLine();
                         System.out.print("Amount: ");
-                        double amount = scanner.nextDouble();
-                        if (bankManager.transfer(currentAccount.getUsername(), toUser, amount)) {
-                            System.out.println("Transfer successful.");
-                        } else {
-                            System.out.println("Transfer failed.");
-                        }
+                        double amt = Double.parseDouble(scanner.nextLine());
+                        bankManager.transfer(currentAccount.getUsername(), toUser, amt);
+                        System.out.println(" Transfer attempted.");
+                    } else {
+                        System.out.println(" Please login first.");
                     }
-                    case 4 -> System.out.printf("Balance: $%.2f%n", currentAccount.getBalance());
-                    case 5 -> bankManager.exportToCSV("account_report.csv");
-                    case 6 -> {
-                        currentAccount = null;
-                        System.out.println("Logged out.");
+                    break;
+
+                case 6:
+                    if (currentAccount != null) {
+                        currentAccount.printBalance();
+                    } else {
+                        System.out.println(" Please login first.");
                     }
-                    default -> System.out.println("Invalid option.");
-                }
+                    break;
+
+                case 7:
+                    System.out.println(" Goodbye!");
+                    return;
+
+                default:
+                    System.out.println(" Invalid option.");
             }
         }
     }
 }
+
 
 
 

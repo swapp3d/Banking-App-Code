@@ -1,74 +1,84 @@
 package banking;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.util.Map;
 
 public class BankManager {
-    private final HashMap<String, BankAccount> accounts = new HashMap<>();
 
-    public boolean createAccount(String username, String password) {
-        if (accounts.containsKey(username)) return false;
-        accounts.put(username, new BankAccount(username, password));
-        return true;
+    private HashMap<String, BankAccount> accounts = new HashMap<>();
+    private final String FILE_NAME = "account_report.csv";
+
+    public void createAccount(String username, String password) {
+        if (!accounts.containsKey(username)) {
+            accounts.put(username, new BankAccount(username, password));
+            saveToCSV();
+        }
     }
 
     public BankAccount login(String username, String password) {
-        BankAccount account = accounts.get(username);
-        if (account != null && account.authenticate(password)) {
-            return account;
+        BankAccount acc = accounts.get(username);
+        if (acc != null && acc.checkPassword(password)) {
+            return acc;
         }
         return null;
     }
 
-    public boolean transfer(String fromUser, String toUser, double amount) {
-        BankAccount from = accounts.get(fromUser);
-        BankAccount to = accounts.get(toUser);
-        if (from != null && to != null && from != to) {
-            from.transferTo(to, amount);
-            return true;
-        }
-        return false;
+    public BankAccount getAccount(String username) {
+        return accounts.get(username);
     }
 
-    public void printAllBalances() {
-        System.out.println("--- Account Balances ---");
-        for (BankAccount acc : accounts.values()) {
-            System.out.printf("%s: $%.2f%n", acc.getUsername(), acc.getBalance());
+    public void transfer(String from, String to, double amount) {
+        BankAccount sender = accounts.get(from);
+        BankAccount receiver = accounts.get(to);
+        if (sender != null && receiver != null && sender.getBalance() >= amount) {
+            sender.withdraw(amount);
+            receiver.deposit(amount);
+            saveToCSV();
         }
     }
 
-    public void exportToCSV(String filename) {
-        try (FileWriter writer = new FileWriter(filename)) {
-            writer.write("Username,Password,Balance\n");  // Include password
-            for (BankAccount acc : accounts.values()) {
-                writer.write(acc.getUsername() + "," + acc.getPassword() + "," + acc.getBalance() + "\n");
-            }
-            System.out.println("Exported to " + filename);
-        } catch (IOException e) {
-            System.out.println("Error exporting: " + e.getMessage());
-        }
-    }
-    public void loadFromCSV(String filename) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line = reader.readLine(); // skip header
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 3) {
-                    String username = parts[0];
-                    String password = parts[1];
-                    double balance = Double.parseDouble(parts[2]);
-                    BankAccount acc = new BankAccount(username, password);
-                    acc.deposit(balance);  // sets initial balance
-                    accounts.put(username, acc);
+    public void loadFromCSV() {
+        File file = new File(FILE_NAME);
+        if (!file.exists()) return;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
+            String line;
+
+            boolean isFirstLine = true;
+            while ((line = br.readLine()) != null) {
+                // Skip header if present
+                if (isFirstLine && line.toLowerCase().contains("username")) {
+                    isFirstLine = false;
+                    continue;
                 }
+
+                String[] data = line.split(",");
+                if (data.length != 3) continue;
+
+                String username = data[0];
+                String password = data[1];
+                double balance = Double.parseDouble(data[2]);
+
+                BankAccount account = new BankAccount(username, password, balance);
+                accounts.put(username, account);
             }
-            System.out.println("Accounts loaded from " + filename);
-        } catch (Exception e) {
-            System.out.println("No previous account data found or error loading: " + e.getMessage());
+        } catch (IOException | NumberFormatException e) {
+            System.out.println("Failed to load accounts: " + e.getMessage());
+        }
+    }
+
+
+    public void saveToCSV() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME))) {
+            for (Map.Entry<String, BankAccount> entry : accounts.entrySet()) {
+                BankAccount acc = entry.getValue();
+                writer.println(acc.toCSV());
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to save accounts: " + e.getMessage());
         }
     }
 }
+
 
