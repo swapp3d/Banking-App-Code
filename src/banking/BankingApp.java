@@ -92,7 +92,7 @@ public class BankingApp {
                     break;
 
                 case 7:
-                    System.out.println(" Goodbye!");
+                    System.out.println(" Exiting app, - bye!");
                     return;
 
                 default:
